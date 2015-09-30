@@ -130,9 +130,12 @@ class TopLevelCommand(Command):
 
         Options:
             --no-cache  Do not use cache when building the image.
+            --pull      Always attempt to pull a newer version of the image.
+            -v VERSION  Put a version, latest by default
         """
         no_cache = bool(options.get('--no-cache', False))
-        project.build(service_names=options['SERVICE'], no_cache=no_cache)
+        version = options.get('-v', None)
+        project.build(service_names=options['SERVICE'], no_cache=no_cache, version=version)
 
     def help(self, project, options):
         """
@@ -213,6 +216,7 @@ class TopLevelCommand(Command):
         else:
             headers = [
                 'Name',
+                'Image',
                 'Command',
                 'State',
                 'Ports',
@@ -224,6 +228,7 @@ class TopLevelCommand(Command):
                     command = '%s ...' % command[:26]
                 rows.append([
                     container.name,
+                    container.image_name,
                     command,
                     container.human_readable_state,
                     container.human_readable_ports,
@@ -469,6 +474,7 @@ class TopLevelCommand(Command):
             -t, --timeout TIMEOUT  Use this timeout in seconds for container shutdown
                                    when attached or when containers are already
                                    running. (default: 10)
+            -v VERSION             Put a version, latest by default
         """
         if options['--allow-insecure-ssl']:
             log.warn(INSECURE_SSL_WARNING)
@@ -482,6 +488,7 @@ class TopLevelCommand(Command):
         force_recreate = options['--force-recreate']
         service_names = options['SERVICE']
         timeout = int(options.get('--timeout') or DEFAULT_TIMEOUT)
+        version = options.get('-v', None)
 
         if force_recreate and not allow_recreate:
             raise UserError("--force-recreate and --no-recreate cannot be combined.")
@@ -492,7 +499,8 @@ class TopLevelCommand(Command):
             allow_recreate=allow_recreate,
             force_recreate=force_recreate,
             do_build=not options['--no-build'],
-            timeout=timeout
+            timeout=timeout,
+            version=version
         )
 
         if not detached:

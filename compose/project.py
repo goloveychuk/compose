@@ -236,10 +236,10 @@ class Project(object):
         for service in self.get_services(service_names):
             service.restart(**options)
 
-    def build(self, service_names=None, no_cache=False):
+    def build(self, service_names=None, no_cache=False,  version=None):
         for service in self.get_services(service_names):
             if service.can_be_built():
-                service.build(no_cache)
+                service.build(no_cache,  version=None)
             else:
                 log.info('%s uses an image, skipping' % service.name)
 
@@ -249,12 +249,16 @@ class Project(object):
            allow_recreate=True,
            force_recreate=False,
            do_build=True,
-           timeout=DEFAULT_TIMEOUT):
+           timeout=DEFAULT_TIMEOUT,
+           version=None):
 
         if force_recreate and not allow_recreate:
             raise ValueError("force_recreate and allow_recreate are in conflict")
 
         services = self.get_services(service_names, include_deps=start_deps)
+        if version is not None:
+            for service in services:
+                service.put_version(version)
 
         for service in services:
             service.remove_duplicate_containers()
